@@ -46,6 +46,16 @@ import { createSpecRegenerationRoutes } from "./routes/app-spec/index.js";
 // Load environment variables
 dotenv.config();
 
+// Ensure PATH includes common Node.js locations for child process spawning
+// This fixes "spawn node ENOENT" errors on macOS when running via non-interactive shells
+const nodePaths = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"];
+const currentPath = process.env.PATH || "";
+const missingPaths = nodePaths.filter((p) => !currentPath.includes(p));
+if (missingPaths.length > 0) {
+  process.env.PATH = [...missingPaths, currentPath].join(":");
+  console.log("[Server] Extended PATH for child processes");
+}
+
 const PORT = parseInt(process.env.PORT || "3008", 10);
 const DATA_DIR = process.env.DATA_DIR || "./data";
 const ENABLE_REQUEST_LOGGING = process.env.ENABLE_REQUEST_LOGGING !== "false"; // Default to true

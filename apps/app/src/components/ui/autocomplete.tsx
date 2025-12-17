@@ -46,7 +46,8 @@ function normalizeOption(opt: string | AutocompleteOption): AutocompleteOption {
   if (typeof opt === "string") {
     return { value: opt, label: opt };
   }
-  return { ...opt, label: opt.label ?? opt.value };
+  const value = opt.value ?? "";
+  return { ...opt, value, label: opt.label ?? value };
 }
 
 export function Autocomplete({
@@ -94,12 +95,13 @@ export function Autocomplete({
 
   // Filter options based on input
   const filteredOptions = React.useMemo(() => {
-    if (!inputValue) return normalizedOptions;
+    if (!inputValue) return normalizedOptions.filter((opt) => opt.value);
     const lower = inputValue.toLowerCase();
     return normalizedOptions.filter(
       (opt) =>
-        opt.value.toLowerCase().includes(lower) ||
-        opt.label?.toLowerCase().includes(lower)
+        opt.value &&
+        (opt.value.toLowerCase().includes(lower) ||
+          opt.label?.toLowerCase().includes(lower))
     );
   }, [normalizedOptions, inputValue]);
 
@@ -108,7 +110,7 @@ export function Autocomplete({
     allowCreate &&
     inputValue.trim() &&
     !normalizedOptions.some(
-      (opt) => opt.value.toLowerCase() === inputValue.toLowerCase()
+      (opt) => opt.value && opt.value.toLowerCase() === inputValue.toLowerCase()
     );
 
   // Get display value
@@ -197,7 +199,7 @@ export function Autocomplete({
                     setInputValue("");
                     setOpen(false);
                   }}
-                  data-testid={`${itemTestIdPrefix}-${option.value.toLowerCase().replace(/[\s/\\]+/g, "-")}`}
+                  data-testid={`${itemTestIdPrefix}-${(option.value ?? "").toLowerCase().replace(/[\s/\\]+/g, "-")}`}
                 >
                   {Icon && <Icon className="w-4 h-4 mr-2" />}
                   {option.label}

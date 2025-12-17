@@ -250,12 +250,15 @@ export function useAutoMode() {
         .start(projectPath, maxConcurrency)
         .then((result) => {
           if (!result.success) {
-            console.error(
-              `[AutoMode] Failed to restore auto mode for ${projectPath}:`,
-              result.error
-            );
-            // Mark as not running if we couldn't restart
-            setAutoModeRunning(projectId, false);
+            if (result.error?.includes("already running")) {
+              console.log(`[AutoMode] Auto mode already running for ${projectPath} - keeping state`);
+            } else {
+              console.error(
+                `[AutoMode] Failed to restore auto mode for ${projectPath}:`,
+                result.error
+              );
+              setAutoModeRunning(projectId, false);
+            }
           } else {
             console.log(`[AutoMode] Restored auto mode for ${projectPath}`);
           }
@@ -295,6 +298,9 @@ export function useAutoMode() {
         console.log(
           `[AutoMode] Started successfully with maxConcurrency: ${maxConcurrency}`
         );
+      } else if (result.error?.includes("already running")) {
+        setAutoModeRunning(currentProject.id, true);
+        console.log("[AutoMode] Already running - state synced");
       } else {
         console.error("[AutoMode] Failed to start:", result.error);
         throw new Error(result.error || "Failed to start auto mode");

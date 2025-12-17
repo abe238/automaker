@@ -172,18 +172,28 @@ export class HttpApiClient implements ElectronAPI {
   }
 
   private async post<T>(endpoint: string, body?: unknown): Promise<T> {
-    const response = await fetch(`${this.serverUrl}${endpoint}`, {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    return response.json();
+    try {
+      const response = await fetch(`${this.serverUrl}${endpoint}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      return response.json();
+    } catch (error) {
+      console.error(`[HttpApiClient] POST ${endpoint} failed:`, error);
+      throw error;
+    }
   }
 
   private async get<T>(endpoint: string): Promise<T> {
     const headers = this.getHeaders();
-    const response = await fetch(`${this.serverUrl}${endpoint}`, { headers });
-    return response.json();
+    try {
+      const response = await fetch(`${this.serverUrl}${endpoint}`, { headers });
+      return response.json();
+    } catch (error) {
+      console.error(`[HttpApiClient] GET ${endpoint} failed:`, error);
+      throw error;
+    }
   }
 
   private async put<T>(endpoint: string, body?: unknown): Promise<T> {

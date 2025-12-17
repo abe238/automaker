@@ -184,7 +184,11 @@ export function SpecView() {
           stateRestoredRef.current = false;
         }
       } catch (error) {
-        console.error("[SpecView] Failed to check status:", error);
+        if (error instanceof TypeError && (error as Error).message.includes('fetch')) {
+          console.warn("[SpecView] Server unreachable on mount - skipping status check");
+        } else {
+          console.error("[SpecView] Failed to check status:", error);
+        }
       } finally {
         statusCheckRef.current = false;
       }
@@ -227,10 +231,16 @@ export function SpecView() {
             setCurrentPhase(status.currentPhase);
           }
         } catch (error) {
-          console.error(
-            "[SpecView] Failed to check status on visibility change:",
-            error
-          );
+          if (error instanceof TypeError && (error as Error).message.includes('fetch')) {
+            console.warn("[SpecView] Server unreachable on visibility change - clearing state");
+            setIsCreating(false);
+            setIsRegenerating(false);
+            setIsGeneratingFeatures(false);
+            setCurrentPhase("");
+            stateRestoredRef.current = false;
+          } else {
+            console.error("[SpecView] Failed to check status on visibility change:", error);
+          }
         }
       }
     };
@@ -285,7 +295,16 @@ export function SpecView() {
           setCurrentPhase(status.currentPhase);
         }
       } catch (error) {
-        console.error("[SpecView] Periodic status check error:", error);
+        if (error instanceof TypeError && (error as Error).message.includes('fetch')) {
+          console.warn("[SpecView] Server unreachable - clearing generation state");
+          setIsCreating(false);
+          setIsRegenerating(false);
+          setIsGeneratingFeatures(false);
+          setCurrentPhase("");
+          stateRestoredRef.current = false;
+        } else {
+          console.error("[SpecView] Periodic status check error:", error);
+        }
       }
     }, STATUS_CHECK_INTERVAL_MS);
 
