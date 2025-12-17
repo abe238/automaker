@@ -122,6 +122,8 @@ export function getModelForUseCase(
 function getBaseOptions(): Partial<Options> {
   return {
     permissionMode: "acceptEdits",
+    // Use full path to node to fix ENOENT errors on non-interactive shells (macOS GUI/IDE)
+    executable: process.execPath,
   };
 }
 

@@ -33,6 +33,7 @@ export interface ExecuteOptions {
   abortController?: AbortController;
   conversationHistory?: ConversationMessage[]; // Previous messages for context
   sdkSessionId?: string; // Claude SDK session ID for resuming conversations
+  executable?: string; // Full path to node executable (fixes ENOENT on non-interactive shells)
 }
 
 /**

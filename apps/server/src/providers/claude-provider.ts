@@ -35,6 +35,7 @@ export class ClaudeProvider extends BaseProvider {
       abortController,
       conversationHistory,
       sdkSessionId,
+      executable,
     } = options;
 
     // Build Claude SDK options
@@ -62,6 +63,8 @@ export class ClaudeProvider extends BaseProvider {
         autoAllowBashIfSandboxed: true,
       },
       abortController,
+      // Use symlinked path to node (not Cellar path) to fix ENOENT on non-interactive shells
+      executable: executable || "/opt/homebrew/bin/node",
       // Resume existing SDK session if we have a session ID
       ...(sdkSessionId && conversationHistory && conversationHistory.length > 0
         ? { resume: sdkSessionId }
@@ -91,6 +94,11 @@ export class ClaudeProvider extends BaseProvider {
     }
 
     // Execute via Claude Agent SDK
+    console.log("[ClaudeProvider] SDK options:", {
+      executable: sdkOptions.executable,
+      cwd: sdkOptions.cwd,
+      model: sdkOptions.model,
+    });
     try {
       const stream = query({ prompt: promptPayload, options: sdkOptions });
 
