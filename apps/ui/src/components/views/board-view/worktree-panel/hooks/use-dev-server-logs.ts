@@ -146,11 +146,18 @@ export function useDevServerLogs({ worktreePath, autoSubscribe = true }: UseDevS
     hasFetchedInitialLogs.current = false;
   }, []);
 
-  /**
-   * Append content to logs, enforcing a maximum buffer size to prevent
-   * unbounded memory growth and progressive UI lag.
-   */
-  const appendLogs = useCallback((content: string) => {
+  // Buffer for batching rapid output events into fewer setState calls.
+  // Content accumulates here and is flushed via requestAnimationFrame,
+  // ensuring at most one React re-render per animation frame (~60fps max).
+  const pendingOutputRef = useRef('');
+  const rafIdRef = useRef<number | null>(null);
+
+  const flushPendingOutput = useCallback(() => {
+    rafIdRef.current = null;
+    const content = pendingOutputRef.current;
+    if (!content) return;
+    pendingOutputRef.current = '';
+
     setState((prev) => {
       const combined = prev.logs + content;
       const didTrim = combined.length > MAX_LOG_BUFFER_SIZE;
@@ -168,6 +175,33 @@ export function useDevServerLogs({ worktreePath, autoSubscribe = true }: UseDevS
         logsVersion: prev.logsVersion + 1,
       };
     });
+  }, []);
+
+  /**
+   * Append content to logs, enforcing a maximum buffer size to prevent
+   * unbounded memory growth and progressive UI lag.
+   *
+   * Uses requestAnimationFrame to batch rapid output events into at most
+   * one React state update per frame, preventing excessive re-renders.
+   */
+  const appendLogs = useCallback(
+    (content: string) => {
+      pendingOutputRef.current += content;
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(flushPendingOutput);
+      }
+    },
+    [flushPendingOutput]
+  );
+
+  // Clean up pending RAF on unmount to prevent state updates after unmount
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
   }, []);
 
   // Fetch initial logs when worktreePath changes
