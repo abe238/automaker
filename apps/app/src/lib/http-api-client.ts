@@ -130,8 +130,10 @@ export class HttpApiClient implements ElectronAPI {
         }
       };
 
-      this.ws.onerror = (error) => {
-        console.error("[HttpApiClient] WebSocket error:", error);
+      this.ws.onerror = () => {
+        // Note: Browser WebSocket onerror doesn't expose error details for security
+        // This is expected behavior - the actual error will be logged when onclose fires
+        console.warn("[HttpApiClient] WebSocket connection failed (will auto-reconnect)");
         this.isConnecting = false;
       };
     } catch (error) {
